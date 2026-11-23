@@ -25,14 +25,14 @@ public class DeliveryTest {
     private static final DateTimeFormatter DATE_FORMAT =
             DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
-    @BeforeAll
-    static void setUp() {
-        Configuration.baseUrl = "http://localhost:9999";
-        Configuration.timeout = 10000;
-        Configuration.headless = Boolean.parseBoolean(
-                System.getProperty("selenide.headless", "false")
-        );
-    }
+
+@BeforeAll
+static void setUp() {
+    Configuration.baseUrl = "http://localhost:9999";
+    Configuration.browser = "chrome";
+    Configuration.headless = true;
+    Configuration.timeout = 10000;
+}
 
     @Test
     void shouldRescheduleDelivery() {
