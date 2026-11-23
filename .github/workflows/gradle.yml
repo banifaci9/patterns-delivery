@@ -1,0 +1,58 @@
+
+name: Delivery Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+
+      - name: Start application and run tests
+        run: |
+          chmod +x gradlew
+
+          java -jar artifacts/app-replan-delivery.jar > app.log 2>&1 &
+          APP_PID=$!
+          trap 'kill "$APP_PID" 2>/dev/null || true' EXIT
+
+          for i in {1..30}; do
+            if curl -fsS http://localhost:9999/ > /dev/null; then
+              echo "Application is ready"
+              break
+            fi
+
+            if [ "$i" -eq 30 ]; then
+              echo "Application failed to start"
+              cat app.log
+              exit 1
+            fi
+
+            sleep 2
+          done
+
+          ./gradlew clean test --no-daemon
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: build/reports/tests/test/
+          if-no-files-found: ignore
